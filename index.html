@@ -84,7 +84,7 @@ const secretKeyInput = document.getElementById("secretKey");
 const latestDiv = document.getElementById("latest");
 
 const docRef = doc(db, "vault", "main");
-const MY_SECRET_KEY = "bossjulie"; // 🔐 
+const MY_SECRET_KEY = "bossjulie"; // 🔐 change this
 
 unlockBtn.onclick = async () => {
   const enteredKey = secretKeyInput.value.trim();
