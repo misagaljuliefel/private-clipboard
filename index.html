@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Private Clipboard</title>
+<style>
+body {
+  margin:0; height:100vh;
+  display:flex; justify-content:center; align-items:center;
+  font-family:monospace;
+  background:linear-gradient(135deg,#0f0f14,#151522);
+  color:white;
+  flex-direction:column;
+}
+#vault {
+  width:80%; height:70vh;
+  padding:20px; font-size:16px;
+  border-radius:12px; border:none;
+  background:rgba(255,255,255,0.05);
+  color:white; resize:none; outline:none; backdrop-filter:blur(10px);
+}
+#status {
+  margin-top:10px; font-size:12px; opacity:0.6;
+}
+#keyPrompt {
+  margin-bottom:10px;
+}
+</style>
+</head>
+<body>
+
+<div id="keyPrompt">
+  <input type="password" id="secretKey" placeholder="Enter secret key">
+  <button id="unlockBtn">Unlock Clipboard</button>
+</div>
+
+<textarea id="vault" placeholder="Type or paste here..." disabled></textarea>
+<div id="status">Locked</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// --- FIREBASE CONFIG ---
+const firebaseConfig = {
+  apiKey: "AIzaSyCb8d5fqVYy38Cwflj-5oRZF2MPIjbkqIk",
+  authDomain: "clipboard-acd5d.firebaseapp.com",
+  projectId: "clipboard-acd5d",
+  storageBucket: "clipboard-acd5d.firebasestorage.app",
+  messagingSenderId: "300996610857",
+  appId: "1:300996610857:web:cf581e1d9a27713ee58538"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const vault = document.getElementById("vault");
+const status = document.getElementById("status");
+const unlockBtn = document.getElementById("unlockBtn");
+const secretKeyInput = document.getElementById("secretKey");
+
+const docRef = doc(db, "vault", "main");
+
+// Change this to your private key
+const MY_SECRET_KEY = "bossjuliemapagmahal";
+
+// Unlock button
+unlockBtn.onclick = async () => {
+  const enteredKey = secretKeyInput.value.trim();
+  if(enteredKey !== MY_SECRET_KEY){
+    alert("Wrong key!");
+    return;
+  }
+
+  // Enable textarea
+  vault.disabled = false;
+  status.innerText = "Loading...";
+
+  // Ensure document exists
+  try{
+    const snap = await getDoc(docRef);
+    if(!snap.exists()){
+      await setDoc(docRef, { content:"", key:MY_SECRET_KEY });
+    }
+  } catch(e){ console.error("Firestore init error:", e); }
+
+  // Real-time listener
+  onSnapshot(docRef, (snap)=>{
+    if(snap.exists()){
+      const data = snap.data();
+      if(data.key === MY_SECRET_KEY){ // check key
+        vault.value = data.content || "";
+        status.innerText = "Loaded at " + new Date().toLocaleTimeString();
+      } else {
+        vault.value = "";
+        vault.disabled = true;
+        status.innerText = "Wrong key stored!";
+      }
+    }
+  });
+
+  // Auto-save on input
+  vault.oninput = async ()=>{
+    await setDoc(docRef, { content:vault.value, key:MY_SECRET_KEY });
+    status.innerText = "Saved at " + new Date().toLocaleTimeString();
+  };
+
+  // Hide key input
+  document.getElementById("keyPrompt").style.display = "none";
+};
+</script>
+
+</body>
+</html>
