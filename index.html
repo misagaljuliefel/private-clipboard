@@ -136,11 +136,29 @@ const docRef = doc(db, "vault", "main");
 appDiv.style.display = "none";
 decoy.style.display = "block";
 
-/* ===== UNLOCK METHODS ===== */
+/* ===== UNLOCK FUNCTION ===== */
+function unlock(){
+  decoy.style.display = "none";
+  appDiv.style.display = "flex";
+}
 
-/* 1. Double click / double tap */
+/* ===== 1. LEFT EDGE TAP (BEST FOR PHONE) ===== */
+document.addEventListener("touchstart", (e) => {
+  if (e.touches[0].clientX < 40) {
+    unlock();
+  }
+});
+
+document.addEventListener("click", (e) => {
+  if (e.clientX < 40) {
+    unlock();
+  }
+});
+
+/* ===== 2. DOUBLE TAP (MOBILE FIXED) ===== */
 let lastTap = 0;
-document.addEventListener("click", () => {
+
+document.addEventListener("touchend", () => {
   const now = Date.now();
   if (now - lastTap < 300) {
     unlock();
@@ -148,20 +166,19 @@ document.addEventListener("click", () => {
   lastTap = now;
 });
 
-/* 2. Keyboard shortcut */
+/* ===== 3. DOUBLE CLICK (DESKTOP) ===== */
+document.addEventListener("dblclick", () => {
+  unlock();
+});
+
+/* ===== 4. KEYBOARD SHORTCUT ===== */
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "u") {
     unlock();
   }
 });
 
-/* Unlock function */
-function unlock(){
-  decoy.style.display = "none";
-  appDiv.style.display = "flex";
-}
-
-/* Lock back (left button) */
+/* ===== LOCK BACK ===== */
 toggleBtn.onclick = () => {
   appDiv.style.display = "none";
   decoy.style.display = "block";
