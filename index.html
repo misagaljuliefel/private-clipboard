@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title> </title> <!-- blank title -->
+<title>New Tab</title>
 
 <style>
 body {
@@ -10,7 +10,7 @@ body {
   font-family: monospace;
 }
 
-/* ===== DECOY (DEFAULT) ===== */
+/* ===== DECOY ===== */
 #decoy {
   width:100vw;
   height:100vh;
@@ -47,7 +47,7 @@ textarea {
   margin-top:20px;
 }
 
-/* latest box */
+/* latest */
 #latest {
   margin-top:10px;
   width:95%;
@@ -75,10 +75,7 @@ textarea {
   cursor:pointer;
 }
 
-/* left = toggle */
 #toggleBtn { left:10px; }
-
-/* right = copy */
 #copyBtn { right:10px; }
 
 .secret-btn:hover {
@@ -95,19 +92,15 @@ textarea {
 
 <body>
 
-<!-- ===== DECOY PAGE ===== -->
 <div id="decoy"></div>
 
-<!-- ===== REAL APP ===== -->
 <div id="app">
-
   <button id="toggleBtn" class="secret-btn"></button>
   <button id="copyBtn" class="secret-btn"></button>
 
-  <div id="latest">Nothing yet...</div>
-  <div id="status">Loading...</div>
-  <textarea id="vault" placeholder="..."></textarea>
-
+  <div id="latest"></div>
+  <div id="status">...</div>
+  <textarea id="vault"></textarea>
 </div>
 
 <script type="module">
@@ -139,23 +132,40 @@ const appDiv = document.getElementById("app");
 
 const docRef = doc(db, "vault", "main");
 
-/* ===== DEFAULT = ALWAYS DECOY ===== */
+/* ===== ALWAYS START DECOY ===== */
 appDiv.style.display = "none";
 decoy.style.display = "block";
 
-/* ===== SECRET TOGGLE ===== */
+/* ===== UNLOCK METHODS ===== */
+
+/* 1. Double click / double tap */
+let lastTap = 0;
+document.addEventListener("click", () => {
+  const now = Date.now();
+  if (now - lastTap < 300) {
+    unlock();
+  }
+  lastTap = now;
+});
+
+/* 2. Keyboard shortcut */
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "u") {
+    unlock();
+  }
+});
+
+/* Unlock function */
+function unlock(){
+  decoy.style.display = "none";
+  appDiv.style.display = "flex";
+}
+
+/* Lock back (left button) */
 toggleBtn.onclick = () => {
   appDiv.style.display = "none";
   decoy.style.display = "block";
 };
-
-/* invisible trigger on left side of screen */
-document.addEventListener("click", (e) => {
-  if (e.clientX < 30) { // left edge click
-    decoy.style.display = "none";
-    appDiv.style.display = "flex";
-  }
-});
 
 /* ===== FIREBASE ===== */
 (async ()=>{
@@ -181,7 +191,7 @@ vault.oninput = async ()=>{
   latestDiv.innerText = vault.value;
 };
 
-/* ===== COPY BUTTON ===== */
+/* ===== COPY ===== */
 copyBtn.onclick = ()=>{
   navigator.clipboard.writeText(latestDiv.innerText)
     .then(()=>status.innerText="Copied")
