@@ -2,84 +2,113 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Shared Clipboard</title>
+<title> </title> <!-- blank title -->
+
 <style>
 body {
   margin:0;
   font-family: monospace;
-  background: #151522;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
 }
 
-button#copyBtn {
-  width: 20px;
-  height: 20px;
-  background: rgba(255,255,255,0.05);
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  opacity: 0.3;
-  transition: opacity 0.2s;
+/* ===== DECOY (DEFAULT) ===== */
+#decoy {
+  width:100vw;
+  height:100vh;
+  background:white;
 }
 
-button#copyBtn:hover {
-  opacity: 0.6;
+/* ===== REAL APP ===== */
+#app {
+  display:none;
+  background:#151522;
+  color:white;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:20px;
 }
 
+/* textarea */
 textarea {
-  width: 90%;
-  max-width: 500px;
-  height: 20vh;
-  background: rgba(255,255,255,0.08);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 12px;
-  font-size: 15px;
-  outline: none;
-  resize: none;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  margin-top: 20px;
+  width:90%;
+  max-width:500px;
+  height:20vh;
+  background:rgba(255,255,255,0.08);
+  color:white;
+  border:none;
+  border-radius:12px;
+  padding:12px;
+  font-size:15px;
+  outline:none;
+  resize:none;
+  backdrop-filter:blur(10px);
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  margin-top:20px;
 }
 
+/* latest box */
 #latest {
-  margin-top: 10px;
-  width: 95%;
-  max-width: 600px;
-  min-height: 25vh;
-  background: rgba(255,255,255,0.1);
-  border-radius: 14px;
-  padding: 18px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-  font-size: 16px;
+  margin-top:10px;
+  width:95%;
+  max-width:600px;
+  min-height:25vh;
+  background:rgba(255,255,255,0.1);
+  border-radius:14px;
+  padding:18px;
+  white-space:pre-wrap;
+  word-wrap:break-word;
+  backdrop-filter:blur(10px);
+  box-shadow:0 6px 16px rgba(0,0,0,0.4);
+}
+
+/* subtle buttons */
+.secret-btn {
+  width:20px;
+  height:20px;
+  background:rgba(0,0,0,0.05);
+  border:none;
+  border-radius:50%;
+  position:absolute;
+  top:10px;
+  opacity:0.2;
+  cursor:pointer;
+}
+
+/* left = toggle */
+#toggleBtn { left:10px; }
+
+/* right = copy */
+#copyBtn { right:10px; }
+
+.secret-btn:hover {
+  opacity:0.4;
 }
 
 #status {
-  margin-top: 10px;
-  font-size: 12px;
-  opacity: 0.7;
+  margin-top:10px;
+  font-size:12px;
+  opacity:0.6;
 }
 </style>
 </head>
+
 <body>
 
-<!-- Copy latest shortcut -->
-<button id="copyBtn">Copy Latest</button>
+<!-- ===== DECOY PAGE ===== -->
+<div id="decoy"></div>
 
-<div id="latest">Nothing yet...</div>
-<div id="status">Loading...</div>
-<textarea id="vault" placeholder="Type here..."></textarea>
+<!-- ===== REAL APP ===== -->
+<div id="app">
+
+  <button id="toggleBtn" class="secret-btn"></button>
+  <button id="copyBtn" class="secret-btn"></button>
+
+  <div id="latest">Nothing yet...</div>
+  <div id="status">Loading...</div>
+  <textarea id="vault" placeholder="..."></textarea>
+
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -101,11 +130,34 @@ const db = getFirestore(app);
 const vault = document.getElementById("vault");
 const latestDiv = document.getElementById("latest");
 const status = document.getElementById("status");
+
+const toggleBtn = document.getElementById("toggleBtn");
 const copyBtn = document.getElementById("copyBtn");
+
+const decoy = document.getElementById("decoy");
+const appDiv = document.getElementById("app");
 
 const docRef = doc(db, "vault", "main");
 
-// Ensure document exists
+/* ===== DEFAULT = ALWAYS DECOY ===== */
+appDiv.style.display = "none";
+decoy.style.display = "block";
+
+/* ===== SECRET TOGGLE ===== */
+toggleBtn.onclick = () => {
+  appDiv.style.display = "none";
+  decoy.style.display = "block";
+};
+
+/* invisible trigger on left side of screen */
+document.addEventListener("click", (e) => {
+  if (e.clientX < 30) { // left edge click
+    decoy.style.display = "none";
+    appDiv.style.display = "flex";
+  }
+});
+
+/* ===== FIREBASE ===== */
 (async ()=>{
   const snap = await getDoc(docRef);
   if(!snap.exists()){
@@ -113,30 +165,27 @@ const docRef = doc(db, "vault", "main");
   }
 })();
 
-// Real-time listener
 onSnapshot(docRef, snap=>{
   if(snap.exists()){
     const data = snap.data();
     if(document.activeElement !== vault){
       vault.value = data.content || "";
     }
-    latestDiv.innerText = data.content || "Nothing yet...";
-    status.innerText = "Loaded at " + new Date().toLocaleTimeString();
+    latestDiv.innerText = data.content || "";
+    status.innerText = "Updated";
   }
 });
 
-// Auto-save on input
 vault.oninput = async ()=>{
   await setDoc(docRef, { content:vault.value });
   latestDiv.innerText = vault.value;
-  status.innerText = "Saved at " + new Date().toLocaleTimeString();
 };
 
-// Copy latest shortcut
+/* ===== COPY BUTTON ===== */
 copyBtn.onclick = ()=>{
   navigator.clipboard.writeText(latestDiv.innerText)
-    .then(()=>status.innerText = "Copied latest text!")
-    .catch(err => status.innerText = "Copy failed: " + err);
+    .then(()=>status.innerText="Copied")
+    .catch(()=>status.innerText="Error");
 };
 </script>
 
